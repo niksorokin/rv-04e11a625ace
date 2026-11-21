@@ -359,25 +359,6 @@
 .s-rec .facts .v30-opt{ color:var(--accent); }
 .s-sec .wlab .v30-pill{ margin-left:4px; padding:3px 8px; border-radius:999px; background:rgba(59,91,255,.10); color:var(--accent); font-size:11px; letter-spacing:.12em; }
 
-/* v30: one-month start plan */
-.s-month .tl2.m30{ height:384px; margin-top:4.5vh; }
-.tl2.m30 .tl2-grid{ top:0; }
-.tl2.m30 .tl2-bar.setup{ top:14px; }
-.tl2.m30 .tl2-bar.rec{ top:80px; }
-.tl2.m30 .tl2-bar.out{ top:146px; }
-.tl2.m30 .tl2-bar.end{ top:278px; }
-.m30-chk{ position:absolute; left:0; right:0; top:216px; height:42px; z-index:1; }
-.m30-chk span{ position:absolute; top:0; transform:translateX(-50%); height:42px; display:flex; align-items:center; gap:8px; padding:0 16px; border-radius:999px; background:#fff; box-shadow:inset 0 0 0 1.5px var(--accent); color:var(--accent); font-size:clamp(13px,1vw,16px); font-weight:500; white-space:nowrap; }
-.m30-chk span::before{ content:""; width:8px; height:8px; border-radius:50%; background:var(--accent); }
-.s-month .m30-foot{ margin-top:3vh; }
-@media(max-width:900px){
-  .s-month .sub{ line-height:1.5; }
-  .s-month .tl2.m30{ height:auto; margin-top:4vh; }
-  .tl2.m30 .tl2-bar{ flex-shrink:0; }
-  .m30-chk{ position:static; height:auto; display:flex; flex-direction:column; gap:8px; }
-  .m30-chk span{ position:static; transform:none; width:100%; justify-content:center; }
-}
-
 /* v30 r2: who does what, process documentation slide */
 .m30-who{ margin-top:3.2vh; display:flex; justify-content:center; gap:0; font-size:clamp(17px,1.3vw,21px); letter-spacing:-.01em; color:var(--ink); }
 .m30-who span{ padding:0 clamp(16px,1.6vw,28px); border-left:1px solid var(--line-2); }
@@ -398,6 +379,31 @@
   .m30-who{ flex-direction:column; gap:8px; align-items:center; }
   .m30-who span{ border-left:0; }
   .docs-wrap{ grid-template-columns:1fr; margin-top:4vh; width:100%; }
+}
+
+/* v30 r3: simple start plan, goals, product slides */
+.m3-steps{ list-style:none; margin:6vh 0 0; padding:0; width:min(1280px,90vw); display:grid; grid-template-columns:repeat(4,1fr); text-align:left; border-top:1px solid var(--line-2); }
+.m3-steps li{ padding:22px clamp(16px,1.6vw,28px) 0; border-left:1px solid var(--line); }
+.m3-steps li:first-child{ border-left:0; padding-left:0; }
+.m3-steps small{ display:block; font-family:var(--mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+.m3-steps b{ display:block; margin-top:12px; font-size:clamp(22px,1.8vw,30px); font-weight:500; letter-spacing:-.02em; }
+.m3-steps span{ display:block; margin-top:10px; font-size:clamp(16px,1.2vw,20px); line-height:1.45; color:var(--mute); }
+.s-month .m30-who{ margin-top:6vh; }
+.s-goals{ justify-content:center; }
+.s-goals h2{ font-size:clamp(48px,5vw,92px); }
+.g3{ margin-top:7vh; width:min(1320px,92vw); display:grid; grid-template-columns:repeat(3,1fr); text-align:left; }
+.g3 > div{ padding:0 clamp(20px,2.4vw,44px); border-left:1px solid var(--line-2); display:flex; flex-direction:column; }
+.g3 > div:first-child{ border-left:0; padding-left:0; }
+.g3 .n{ font-family:var(--mono); font-size:13px; letter-spacing:.14em; color:var(--accent); }
+.g3 .t{ margin-top:14px; font-size:clamp(24px,2.1vw,36px); font-weight:500; letter-spacing:-.025em; line-height:1.12; }
+.g3 .b{ margin-top:14px; font-size:clamp(16px,1.25vw,21px); line-height:1.45; color:var(--mute); }
+.g3 .k{ margin-top:22px; font-family:var(--mono); font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); }
+.s-prod .eyebrow b{ color:var(--faint); }
+@media(max-width:900px){
+  .m3-steps{ grid-template-columns:1fr; border-top:0; }
+  .m3-steps li, .m3-steps li:first-child{ border-left:0; padding:16px 0; border-top:1px solid var(--line); }
+  .g3{ grid-template-columns:1fr; gap:28px; }
+  .g3 > div, .g3 > div:first-child{ border-left:0; padding:0; }
 }
 </style>
 </head>
@@ -543,7 +549,7 @@
   <p class="quiet rise d3"><b>Same product either way.</b> On your servers, it is configured to your policies.</p>
 </section>
 <section class="s-where">
-    <div class="eyebrow rise">Where it helps <b>·</b> finance &amp; operations first</div>
+    <div class="eyebrow rise">Where it helps <b>·</b> a few examples</div>
     <h2 class="rise d1" style="font-size:clamp(44px,4.8vw,80px); max-width:none;">Anywhere work runs<br><em>between systems.</em></h2>
     <div class="roles roles-nine rise d2">
       <div><div class="r">Month-end close</div><div class="d">Reconciliation and the operating pack rebuilt in Excel, month after month.</div></div>
@@ -556,23 +562,18 @@
       <div><div class="r">Claims operations</div><div class="d">Documents chased and matched to the file.</div></div>
       <div><div class="r">Underwriting support</div><div class="d">Submissions re-typed before anyone decides.</div></div>
     </div>
-    <div class="roles-foot rise d3">Claims and underwriting are examples of the same pattern <b>·</b> the work we start with is yours to choose.</div>
   </section>
 <section class="s-month">
   <div class="eyebrow rise">How we start</div>
   <h2 class="rise d1">First month <em>free.</em></h2>
-  <div class="sub rise d1">We install<span>→</span>onboard your team<span>→</span>check in with managers weekly<span>→</span>debrief together</div>
-  <div class="tl2 m30 rise d2" aria-label="One-month timeline">
-    <div class="tl2-grid"><i></i><i></i><i></i><i></i></div>
-    <div class="tl2-bar setup" style="left:0;width:15%">Onboarding</div>
-    <div class="tl2-bar rec" style="left:0;width:100%">Recording runs in the background<small>all four weeks</small></div>
-    <div class="tl2-bar out" style="left:25%;width:75%">Reports · process maps · automation plan<small>updated every week</small></div>
-    <div class="m30-chk"><span style="left:25%">Manager checkpoint</span><span style="left:50%">Manager checkpoint</span><span style="left:75%">Manager checkpoint</span></div>
-    <div class="tl2-bar end" style="left:76%;width:24%">Joint debrief<small>end of month</small></div>
-    <div class="tl2-axis wk"><span style="left:12.5%">Week 1</span><span style="left:37.5%">Week 2</span><span style="left:62.5%">Week 3</span><span style="left:87.5%">Week 4</span></div>
-  </div>
+  <div class="sub rise d1">20–30 people<span>·</span>one team you choose<span>·</span>results from week one</div>
+  <ol class="m3-steps rise d2">
+    <li><small>Week 1</small><b>Install</b><span>The recorder goes on. Nothing changes in your systems.</span></li>
+    <li><small>Week 1</small><b>Onboard the team</b><span>A short session for the team and their managers.</span></li>
+    <li><small>Weeks 2–4</small><b>Weekly checkpoints</b><span>Reports and the plan update every week. We go through them with managers.</span></li>
+    <li><small>End of month</small><b>Joint debrief</b><span>What we found and what to automate first.</span></li>
+  </ol>
   <div class="m30-who rise d3"><span><b>Your</b> process lead</span><span><b>Silow</b> a named manager, every week</span><span><b>Symfa</b> builds the automations</span></div>
-  <p class="quiet m30-foot rise d3">20–30 people · one team you choose · results from week one</p>
 </section>
 <section class="dark s-layers s-iso">
   <h2 class="rise">From work screens <em>to any report.</em></h2>
@@ -1041,41 +1042,56 @@
     <li><i>03</i><b>Any output</b><span>Reports, maps and plans</span></li>
   </ol>
 </section>
-<section class="s-docs">
-  <div class="eyebrow rise">Process documentation</div>
-  <h2 class="rise d1">Process documentation <em>without shadowing.</em></h2>
-  <div class="docs-wrap rise d2">
-    <ol class="docs-steps">
-      <li><i>1</i><div><b>People work as usual.</b><span>The recorder captures every run of the process, by everyone who does it, in every app.</span></div></li>
-      <li><i>2</i><div><b>Runs become one map.</b><span>Steps, systems and time per step, merged from all the people on the process.</span></div></li>
-      <li><i>3</i><div><b>The document stays current.</b><span>It updates every week as the work changes. Nobody sits next to anyone with a notepad.</span></div></li>
-    </ol>
-    <div class="docs-demo" aria-label="Demo screen placeholder"><span>Demo screen</span></div>
+<section class="s-goals">
+  <div class="eyebrow rise">What success looks like</div>
+  <h2 class="rise d1">Three things <em>you asked for.</em></h2>
+  <div class="g3 rise d2">
+    <div><div class="n">01</div><div class="t">Process documentation without consultants.</div><div class="b">Written from every recorded run, not from one person watched for a day.</div><div class="k">Process page · export</div></div>
+    <div><div class="n">02</div><div class="t">A plan of action, not a report.</div><div class="b">The step to automate, why, and a brief your developers can build an agent from.</div><div class="k">Plan · the one step · blueprint</div></div>
+    <div><div class="n">03</div><div class="t">Visibility into how people work.</div><div class="b">Each team and each person: hours, volume, rate, and what to change.</div><div class="k">Team · people</div></div>
   </div>
 </section>
-<section class="s-depth">
-  <div class="lvl"><span class="on"><i>1</i>Company</span><span class=""><i>2</i>Team</span><span class=""><i>3</i>Process</span><span class=""><i>4</i>Build plan</span></div>
-  <h2>Company report: where every team’s time goes.</h2>
-  <p class="line">Hours by team and type of work, and the biggest automation opportunities. Here: <b>3,112 h in three weeks, 42% AI could take or draft.</b></p>
-  <div class="appframe"><iframe title="Silow · company report" data-src="app2/index.html?embed=1#company"></iframe></div>
+<section class="s-depth s-prod">
+  <div class="eyebrow">In the product <b>·</b> home</div>
+  <h2>Home: the insights come first.</h2>
+  <p class="line">Computed from the recorded weeks: <b>the biggest opportunity, the slowest step, the biggest change.</b></p>
+  <div class="appframe"><iframe title="Silow · home" data-src="app3/index.html?embed=1#home" data-focus="Start here"></iframe></div>
 </section>
-<section class="s-depth">
-  <div class="lvl"><span class="done"><i>1</i>Company</span><span class="on"><i>2</i>Team</span><span class=""><i>3</i>Process</span><span class=""><i>4</i>Build plan</span></div>
-  <h2>Team report: how one team spends its week.</h2>
-  <p class="line">Each work stream, the apps it runs in and the people doing it. Claims intake: <b>45% an agent could take</b>, the biggest stream is FNOL entry.</p>
-  <div class="appframe"><iframe title="Silow · team report" data-src="app2/index.html?embed=1#team/intake"></iframe></div>
+<section class="s-depth s-prod">
+  <div class="eyebrow">02 <b>·</b> Plan of action</div>
+  <h2>Processes &amp; automation: a plan, ranked.</h2>
+  <p class="line">Every suggestion with hours back, effort and payback, <b>linked to the step it comes from.</b></p>
+  <div class="appframe"><iframe title="Silow · automation plan" data-src="app3/index.html?embed=1#plan"></iframe></div>
 </section>
-<section class="s-depth">
-  <div class="lvl"><span class="done"><i>1</i>Company</span><span class="done"><i>2</i>Team</span><span class="on"><i>3</i>Process</span><span class=""><i>4</i>Build plan</span></div>
-  <h2>Process map: every step, timed from real runs.</h2>
-  <p class="line">Each step, its system and its time, and the one step that slows it down. FNOL to claim set-up: <b>652 notices, 18 steps, slowest is re-keying loss details.</b></p>
-  <div class="appframe"><iframe title="Silow · process map" data-src="app2/index.html?embed=1#case/n1"></iframe></div>
+<section class="s-depth s-prod">
+  <div class="eyebrow">01 <b>·</b> Documentation</div>
+  <h2>One process, documented from the work itself.</h2>
+  <p class="line">From 652 recorded runs by six people. <b>Create a guide or export to Word, PDF, Visio or BPMN.</b></p>
+  <div class="appframe"><iframe title="Silow · process documentation" data-src="app3/index.html?embed=1#case/n1" data-focus="written instructions"></iframe></div>
 </section>
-<section class="s-depth">
-  <div class="lvl"><span class="done"><i>1</i>Company</span><span class="done"><i>2</i>Team</span><span class="done"><i>3</i>Process</span><span class="on"><i>4</i>Build plan</span></div>
-  <h2>Build plan: every process comes with one.</h2>
-  <p class="line">What gets built, in which systems, hours back a week and who approves it. Ready to hand to IT. This one: <b>FNOL email → claim draft, 36.4 h a week.</b></p>
-  <div class="appframe"><iframe title="Silow · automation plan item" data-src="app2/index.html?embed=1#plan~sug=fnol"></iframe></div>
+<section class="s-depth s-prod">
+  <div class="eyebrow">02 <b>·</b> Plan of action</div>
+  <h2>The one step to change, and why.</h2>
+  <p class="line">Step 8, re-keying loss details: <b>18% of the time, typed field by field.</b> What to do with it comes with the numbers.</p>
+  <div class="appframe"><iframe title="Silow · the one step" data-src="app3/index.html?embed=1#case/n1/end"></iframe></div>
+</section>
+<section class="s-depth s-prod">
+  <div class="eyebrow">02 <b>·</b> Plan of action</div>
+  <h2>A brief your developers can build the agent from.</h2>
+  <p class="line">Trigger, inputs, systems, where a person checks, outputs. <b>Copy it or print it for IT and Symfa.</b></p>
+  <div class="appframe"><iframe title="Silow · automation blueprint" data-src="app3/index.html?embed=1#case/n1/brief"></iframe></div>
+</section>
+<section class="s-depth s-prod">
+  <div class="eyebrow">03 <b>·</b> People and teams</div>
+  <h2>Team report: what to change in this team.</h2>
+  <p class="line">Claims intake: <b>the automations that touch this team, sorted by hours back.</b></p>
+  <div class="appframe"><iframe title="Silow · team recommendations" data-src="app3/index.html?embed=1#team/intake" data-focus="Automations"></iframe></div>
+</section>
+<section class="s-depth s-prod">
+  <div class="eyebrow">03 <b>·</b> People and teams</div>
+  <h2>Every person, side by side.</h2>
+  <p class="line">Hours, items done and items per hour for all 30 people. <b>Open anyone for their own report and recommendations.</b></p>
+  <div class="appframe"><iframe title="Silow · personal reports" data-src="app3/index.html?embed=1#people"></iframe></div>
 </section>
 <section class="s-close">
   <h2 class="rise">Pick a team.<br><em>Start the free month.</em></h2>
@@ -1241,6 +1257,21 @@
   mqRM.addEventListener && mqRM.addEventListener('change', maybeRun);
   if (document.documentElement.classList.contains('one')) { visible = true; maybeRun(); }
 })();
+</script>
+<script>
+document.querySelectorAll('iframe[data-focus]').forEach(fr => fr.addEventListener('load', () => {
+  const t = fr.dataset.focus; let tries = 0;
+  const go = () => { try {
+    const d = fr.contentDocument, v = d.querySelector('section.view.on') || d.body;
+    const h = [...v.querySelectorAll('h1,h2,h3')].find(e => e.textContent.trim().includes(t));
+    if (!h) { if (++tries < 20) setTimeout(go, 250); return; }
+    let sc = h.parentElement; while (sc && !(sc.scrollHeight > sc.clientHeight + 5 && /(auto|scroll)/.test(getComputedStyle(sc).overflowY))) sc = sc.parentElement;
+    sc = sc || d.scrollingElement;
+    const top = h.getBoundingClientRect().top - (sc === d.scrollingElement ? 0 : sc.getBoundingClientRect().top) + sc.scrollTop - 20;
+    sc.scrollTop = Math.max(0, top);
+  } catch (e) {} };
+  setTimeout(go, 700);
+}));
 </script>
 </body>
 </html>
