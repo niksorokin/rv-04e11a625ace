@@ -377,6 +377,28 @@
   .m30-chk{ position:static; height:auto; display:flex; flex-direction:column; gap:8px; }
   .m30-chk span{ position:static; transform:none; width:100%; justify-content:center; }
 }
+
+/* v30 r2: who does what, process documentation slide */
+.m30-who{ margin-top:3.2vh; display:flex; justify-content:center; gap:0; font-size:clamp(17px,1.3vw,21px); letter-spacing:-.01em; color:var(--ink); }
+.m30-who span{ padding:0 clamp(16px,1.6vw,28px); border-left:1px solid var(--line-2); }
+.m30-who span:first-child{ border-left:0; }
+.m30-who b{ font-family:var(--mono); font-weight:400; font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-right:10px; }
+.s-month .m30-who + .m30-foot{ margin-top:1.6vh; font-size:clamp(14px,1vw,17px); }
+.s-docs{ justify-content:center; }
+.s-docs h2{ font-size:clamp(44px,4.6vw,84px); }
+.docs-wrap{ margin-top:6vh; width:min(1320px,90vw); display:grid; grid-template-columns:minmax(300px,0.8fr) 1.4fr; gap:clamp(32px,4vw,72px); align-items:center; text-align:left; }
+.docs-steps{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:28px; }
+.docs-steps li{ display:flex; gap:18px; align-items:flex-start; }
+.docs-steps i{ flex:none; font-style:normal; width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:var(--ink); color:#fff; font-family:var(--mono); font-size:13px; margin-top:2px; }
+.docs-steps b{ display:block; font-size:clamp(20px,1.6vw,27px); font-weight:500; letter-spacing:-.015em; }
+.docs-steps span{ display:block; margin-top:6px; font-size:clamp(16px,1.2vw,20px); line-height:1.45; color:var(--mute); }
+.docs-demo{ aspect-ratio:16/10; width:100%; border-radius:18px; border:1.5px dashed var(--line-2); background:var(--paper-2); display:grid; place-items:center; }
+.docs-demo span{ font-family:var(--mono); font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); }
+@media(max-width:900px){
+  .m30-who{ flex-direction:column; gap:8px; align-items:center; }
+  .m30-who span{ border-left:0; }
+  .docs-wrap{ grid-template-columns:1fr; margin-top:4vh; width:100%; }
+}
 </style>
 </head>
 <body>
@@ -500,7 +522,7 @@
       </div>
     </div>
   </div>
-  <p class="quiet rise d3">Leadership sees company and team reports, managers their own teams. <b>Names are anonymous by default; masking is optional.</b></p>
+  <p class="quiet rise d3">Leadership sees company and team reports, managers their own teams. <b>On your servers, anonymity, recording pause and masking are set to your needs.</b></p>
   <p class="quiet ephi rise d3">We have experience securely storing and processing electronic protected health information (ePHI) in line with HIPAA requirements.</p>
 </section>
 <section class="s-dep">
@@ -518,6 +540,7 @@
       <div class="b">One Docker Compose package with SSO. Your data never leaves your perimeter and never reaches Silow.</div>
     </div>
   </div>
+  <p class="quiet rise d3"><b>Same product either way.</b> On your servers, it is configured to your policies.</p>
 </section>
 <section class="s-where">
     <div class="eyebrow rise">Where it helps <b>·</b> finance &amp; operations first</div>
@@ -548,6 +571,7 @@
     <div class="tl2-bar end" style="left:76%;width:24%">Joint debrief<small>end of month</small></div>
     <div class="tl2-axis wk"><span style="left:12.5%">Week 1</span><span style="left:37.5%">Week 2</span><span style="left:62.5%">Week 3</span><span style="left:87.5%">Week 4</span></div>
   </div>
+  <div class="m30-who rise d3"><span><b>Your</b> process lead</span><span><b>Silow</b> a named manager, every week</span><span><b>Symfa</b> builds the automations</span></div>
   <p class="quiet m30-foot rise d3">20–30 people · one team you choose · results from week one</p>
 </section>
 <section class="dark s-layers s-iso">
@@ -1016,6 +1040,18 @@
     <li><i>02</i><b>Data</b><span>Steps, systems and time</span></li>
     <li><i>03</i><b>Any output</b><span>Reports, maps and plans</span></li>
   </ol>
+</section>
+<section class="s-docs">
+  <div class="eyebrow rise">Process documentation</div>
+  <h2 class="rise d1">Process documentation <em>without shadowing.</em></h2>
+  <div class="docs-wrap rise d2">
+    <ol class="docs-steps">
+      <li><i>1</i><div><b>People work as usual.</b><span>The recorder captures every run of the process, by everyone who does it, in every app.</span></div></li>
+      <li><i>2</i><div><b>Runs become one map.</b><span>Steps, systems and time per step, merged from all the people on the process.</span></div></li>
+      <li><i>3</i><div><b>The document stays current.</b><span>It updates every week as the work changes. Nobody sits next to anyone with a notepad.</span></div></li>
+    </ol>
+    <div class="docs-demo" aria-label="Demo screen placeholder"><span>Demo screen</span></div>
+  </div>
 </section>
 <section class="s-depth">
   <div class="lvl"><span class="on"><i>1</i>Company</span><span class=""><i>2</i>Team</span><span class=""><i>3</i>Process</span><span class=""><i>4</i>Build plan</span></div>
