@@ -2262,6 +2262,20 @@ body.x-open.x-sheet{ overflow:hidden; }
 
 .ptt .ptt-m .cxcat b{ white-space:nowrap; }
 
+/* ---------- fix 4: the pilot scope block on #plan (persisted, removable, exported) ---------- */
+.pilot-b .dir-h{ grid-template-columns:minmax(0,1.4fr) repeat(4,minmax(70px,.6fr)); }
+.pilot-r{ grid-template-columns:minmax(0,1fr) 92px 92px 80px 96px; }
+.pilot-r:last-child{ border-bottom:0; }
+.pilot-x{ height:26px; padding:0 10px; font-size:12px; justify-self:end; }
+@media (max-width:900px){
+  .pilot-b .dir-h{ grid-template-columns:1fr 1fr; }
+  .pilot-r{ grid-template-columns:minmax(0,1fr) 88px; }
+}
+/* fix 3: the Share/Export popover is opened from inside the suggestion / blueprint drawer
+   (z-index 1001), so it has to sit above it; .xbg still swallows the outside click. */
+.xbg{ z-index:1060; }
+.xpop{ z-index:1061; }
+
 </style>
 <style id="v5">
 /* v5: full-screen live app. No desk background, no fake browser bar, no window frame:
@@ -4473,6 +4487,7 @@ function rPlan(){
     body = `${costCtl()}
     ${tiles([{l:'Hours back per week',v:back.toFixed(1)+'<small>h</small>',s:`of ${Math.round((companyWeek(0).dh+companyWeek(1).dh+companyWeek(2).dh)/30).toLocaleString('en-US')} h recorded per week`,hl:1},{l:'People affected',v:ppl.size,s:`of ${PEOPLE.length} recorded`},{l:'Value per month',v:money(month),s:`at ${money(S.cost)}/h`},{l:'Value per year',v:kmoney(month*12),s:'if the weeks repeat'},{l:'Build effort',v:eff+'<small>person-weeks</small>',s:`payback ≈ ${Math.round(eff*40/back)} weeks overall`}])}
     <p class="note">Summary totals cover the existing work-stream suggestions; process-blueprint estimates are shown separately. Blueprint build effort uses the median existing plan effort at the same complexity. Payback models released time, not cash savings.</p>
+    <div class="dirs" style="margin-bottom:14px">${pilotBlock()}</div>
     ${planCatalog()}
     <div class="note">Hours back = observed hours on the affected tasks × the share an agent can take (from the task types). Effort is in person-weeks of build and review. Change the loaded cost to see the value move; payback does not depend on it.</div>`;
   } else if(S.tab==='maps'){
@@ -4496,7 +4511,7 @@ function rPlan(){
   }
   if(new URLSearchParams(location.search).has('workflow') && S.tab==='proc'){ const start=body.indexOf('<div class="pmap">'),end=body.indexOf('<div class="card"',start); const map=body.slice(start,end); body=body.slice(0,start)+body.slice(end); const at=body.indexOf('<div class="tiles'); if(at>=0)body=body.slice(0,at)+map+body.slice(at); }
   $('#v-plan').innerHTML = `<div class="page">${head}${body}<div class="note" style="margin-top:28px">Process maps are drawn from recorded steps; waits are working hours between steps.</div></div>`;
-  if(S.tab==='plan') bindCost();
+  if(S.tab==='plan'){ bindCost(); bindPilot(); }
   const ma=$('#maps-all'); if(ma) ma.onclick=()=>{ if(S.mapsOpen.size===CX.cases_.length) S.mapsOpen.clear(); else CX.cases_.forEach(c=>S.mapsOpen.add(c.id)); rPlan(); };
 }
 /* suggestion drawer content (shown by openModal) */
@@ -4505,7 +4520,12 @@ function automationFooter(id){
   const unavailable='This work-stream suggestion has no mapped process or target step yet.';
   const action=(key,label,href,title)=>`<button class="btn" data-automation-action="${key}" ${href?`data-href="${href}" title="${esc(title)}"`:`disabled title="${unavailable}" aria-description="${unavailable}"`}>${esc(label)}</button>`;
   const stepLabel=c&&n?'See step '+n+' · '+CX.label(c,n)+' on the board':'See target step on the board';
-  return `<div class="ov-f automation-actions">${action('map','Open process map',c?'#case/'+c.id:null,c?CX.SHORT[c.id]:'')}${action('step',stepLabel,c&&n?'#case/'+c.id+'?step='+n:null,c&&n?CX.sname(c,n):'')}<span style="flex:1"></span><button class="btn solid" id="ov-go" data-automation-action="pilot">${S.inPlan.has(id)?ic('check',14,2)+' In pilot scope':'Add to pilot scope'}</button></div>`;
+  const xkey=id.startsWith('case-')?'blueprint/'+id.slice(5):'suggestion/'+id;
+  const xbtn=window.SilowExport&&window.SilowExport.button
+    ? window.SilowExport.button({label:'Export', id:xkey})
+    : '';
+  const inp=S.inPlan.has(id);
+  return `<div class="ov-f automation-actions">${action('map','Open process map',c?'#case/'+c.id:null,c?CX.SHORT[c.id]:'')}${action('step',stepLabel,c&&n?'#case/'+c.id+'?step='+n:null,c&&n?CX.sname(c,n):'')}<span style="flex:1"></span>${xbtn}<button class="btn solid" id="ov-go" data-automation-action="pilot" aria-pressed="${inp}" title="${inp?'Remove this from the pilot scope. The scope is listed on the Automation plan and goes into its export.':'Add this to the pilot scope. The scope is listed on the Automation plan and goes into its export.'}">${inp?ic('check',14,2)+' In pilot scope':'Add to pilot scope'}</button></div>`;
 }
 function fillCaseSug(id){
   const c=CX.cases_.find(c=>c.id===id); if(!c)return false;
@@ -4519,7 +4539,7 @@ function fillCaseSug(id){
     <div class="sec"><h3>Systems</h3><p>${r.systems.map(esc).join(' · ')}</p></div><div class="sec"><h3>Human checks</h3>${list(r.manual_touchpoints)}</div><div class="sec"><h3>Stays with people</h3>${list(r.stays_with_people)}</div>
     <div class="sec"><h3>Acceptance criteria</h3>${list(r.acceptance)}</div><div class="sec"><h3>Scope</h3><p>${esc(c.extra.boundary)}</p></div></div>
     ${automationFooter(key)}`;
-  $('#ov-go').onclick=()=>{S.inPlan.has(key)?S.inPlan.delete(key):S.inPlan.add(key);fillModal('sug='+key);$('#ov-go').focus();rPlan();};
+  $('#ov-go').onclick=()=>{pilotToggle(key);fillModal('sug='+key);$('#ov-go').focus();rPlan();};
   return true;
 }
 function fillSug(id){
@@ -4541,7 +4561,7 @@ function fillSug(id){
     <div class="sec"><h3>Stays human</h3><ul>${s.human.map(b=>`<li>${b}</li>`).join('')}</ul><div class="note">Approver: <b>${s.approver}</b>. Runs inside your perimeter; every run is in the audit log.</div></div>
   </div>
   ${automationFooter(id)}`;
-  $('#ov-go').onclick=()=>{ S.inPlan.has(id)?S.inPlan.delete(id):S.inPlan.add(id); fillModal('sug='+id); $('#ov-go').focus(); if(S.view==='plan') rPlan(); else refreshAuto(); };
+  $('#ov-go').onclick=()=>{ pilotToggle(id); fillModal('sug='+id); $('#ov-go').focus(); if(S.view==='plan') rPlan(); else refreshAuto(); };
   return true;
 }
 const openSug = id => openModal('sug='+id);
@@ -4985,7 +5005,7 @@ function rPeople(){
     <h1>Personal reports</h1>
     <div class="lede">${PEOPLE.length} people recorded in ${TEAMS.length} teams, ${P}. Each report is written for the person themself — what their weeks looked like, no scores.</div>
     <div class="pl-tools"><label class="pl-search">${ic('search',14,2)}<input id="plq" placeholder="${S.anon?'Search by role, code or team':'Search by name, role or team'}" autocomplete="off" aria-label="Search people"></label>
-      <div class="seg pl-sort" role="group" aria-label="Sort people">${XSORTS.map(([k,l])=>`<button type="button" data-psort="${k}" class="${(S.psort||'group')===k?'on':''}">${l}</button>`).join('')}</div>
+      <div class="seg pl-sort" role="group" aria-label="Sort people">${XSORTS.map(([k,l])=>`<button type="button" data-psort="${k}" class="${(S.psort||'group')===k?'on':''}"${XSORT_WHY[k]?` title="${esc(XSORT_WHY[k])}"`:''}>${l}</button>`).join('')}</div>
       <span class="meta" id="plc">${PEOPLE.length} people</span></div>
     <p class="note" style="margin-top:8px">Hours = work tasks identified on the recording. Days over 4 h = weekdays with more than 240 recorded minutes, of ${nDays}. Items / h = items completed ÷ recorded hours. A workload view, not a ranking — no scores, no rank numbers.${dFlat?` In ${P.toLowerCase()==='oct 13–31'?'these three weeks':'this week'} every recorded day passed the 4-hour line, so that column reads ${nDays} of ${nDays} for everyone; the variation is in the items and the rate.`:''}</p>
     ${head}
@@ -5196,26 +5216,104 @@ function xVisioCsv(doc){
   const rows=doc.flow.steps.map(s=>[s.id, s.name, (s.next||[]).join(','), '', XSHAPE[s.type]||'Process', s.lane||'', s.phase||'']);
   return [head, ...rows].map(r=>r.map(xcell).join(',')).join('\r\n');
 }
+/* ---------- BPMN 2.0 with a real DI (diagram interchange) section ----------
+   Three rules this generator follows, because a file that breaks any of them does not open:
+   1. Every flow node and every sequence flow needs a shape / edge with coordinates in
+      BPMNDI. BPMN itself holds no geometry, so a file without DI is "no diagram to display".
+   2. An exclusiveGateway is only a gateway when it splits or joins. A step with exactly one
+      predecessor and one successor is a task, whatever the recording flagged it as.
+   3. The recorded steps are all work. Start and end are separate synthetic events, so no
+      recorded step is spent being a terminator.
+   Layout is deterministic: lanes are horizontal bands, nodes sit left to right in step
+   order, one column each — so two nodes can never overlap. */
+const XB = { X:160, Y:80, HDR:30, LANE:160, NW:120, NH:72, GW:50, EW:36, COL:180, PAD:40 };
+function xBpmnModel(doc){
+  const f=doc.flow||{}, steps=(f.steps||[]).slice();
+  const present={}; steps.forEach(s=>{ present[String(s.id)]=s; });
+  const outs={}, ins={};
+  steps.forEach(s=>{ const k=String(s.id); outs[k]=(s.next||[]).map(String).filter(t=>present[t]&&t!==k); });
+  steps.forEach(s=>{ outs[String(s.id)].forEach(t=>{ (ins[t]=ins[t]||[]).push(String(s.id)); }); });
+  const nOut=k=>(outs[k]||[]).length, nIn=k=>(ins[k]||[]).length;
+  let lanes=(f.lanes&&f.lanes.length?f.lanes.slice():[]).filter(l=>steps.some(s=>s.lane===l));
+  steps.forEach(s=>{ if(s.lane && lanes.indexOf(s.lane)<0) lanes.push(s.lane); });
+  const laneIx=l=>{ const i=lanes.indexOf(l); return i<0?0:i; };
+  const nid=k=>'Node_'+String(k).replace(/[^A-Za-z0-9_]/g,'_');
+  const N=steps.map((s,i)=>{
+    const k=String(s.id), gate=nOut(k)>1||nIn(k)>1;
+    return { k, step:s, id:nid(k), tag:gate?'exclusiveGateway':'task', col:i+1, lane:laneIx(s.lane),
+      name:(s.n!=null?s.n+'. ':'')+s.name+(s.medianMin!=null?' ('+s.medianMin+' min)':''),
+      w:gate?XB.GW:XB.NW, h:gate?XB.GW:XB.NH, inc:[], out:[] };
+  });
+  const byKey={}; N.forEach(n=>{ byKey[n.k]=n; });
+  const cols=steps.length+2;
+  const heads=N.filter(n=>nIn(n.k)===0), tails=N.filter(n=>nOut(n.k)===0);
+  const start=N.length?{ id:'StartEvent_1', tag:'startEvent', name:'Start', col:0,
+    lane:(heads[0]||N[0]).lane, w:XB.EW, h:XB.EW, inc:[], out:[] }:null;
+  const end=N.length?{ id:'EndEvent_1', tag:'endEvent', name:'End', col:cols-1,
+    lane:(tails[tails.length-1]||N[N.length-1]).lane, w:XB.EW, h:XB.EW, inc:[], out:[] }:null;
+  const F=[]; const link=(a,b)=>{ if(!a||!b) return; const e={id:'Flow_'+(F.length+1), src:a, tgt:b};
+    F.push(e); a.out.push(e.id); b.inc.push(e.id); };
+  if(start) (heads.length?heads:[N[0]]).forEach(n=>link(start,n));
+  N.forEach(n=>(outs[n.k]||[]).forEach(t=>link(n,byKey[t])));
+  if(end) (tails.length?tails:[N[N.length-1]]).forEach(n=>link(n,end));
+  const ALL=[].concat(start?[start]:[], N, end?[end]:[]);
+  ALL.forEach(n=>{
+    n.x=XB.X+XB.HDR+XB.PAD+n.col*XB.COL+Math.round((XB.NW-n.w)/2);
+    n.y=XB.Y+n.lane*XB.LANE+Math.round((XB.LANE-n.h)/2);
+    n.cy=n.y+Math.round(n.h/2);
+  });
+  const poolW=XB.HDR+XB.PAD+(Math.max(1,cols)-1)*XB.COL+XB.NW+XB.PAD;
+  const poolH=Math.max(1,lanes.length)*XB.LANE;
+  return { steps, lanes, nodes:ALL, flows:F, poolW, poolH };
+}
+function xBpmnWaypoints(e){
+  const a=e.src, b=e.tgt, x1=a.x+a.w, y1=a.cy, x2=b.x, y2=b.cy;
+  if(x2>=x1){
+    if(y1===y2) return [[x1,y1],[x2,y2]];
+    const mx=Math.round((x1+x2)/2);
+    return [[x1,y1],[mx,y1],[mx,y2],[x2,y2]];
+  }
+  /* a flow that goes back up the chain: route it below the taller of the two bands */
+  const my=Math.max(y1,y2)+Math.round(XB.LANE/2)-18;
+  return [[x1,y1],[x1+24,y1],[x1+24,my],[x2-24,my],[x2-24,y2],[x2,y2]];
+}
 function xBpmn(doc){
-  const f=doc.flow, pid='Process_'+xslug(doc.id).replace(/-/g,'_');
-  const nid=s=>'Node_'+String(s.id).replace(/[^A-Za-z0-9_]/g,'_');
-  const tag=s=>s.type==='start'?'startEvent':s.type==='end'?'endEvent':s.type==='decision'?'exclusiveGateway':'task';
-  const lanes=(f.lanes&&f.lanes.length?f.lanes:[]).filter(l=>f.steps.some(s=>s.lane===l));
-  const xe=s=>esc(xtext(s));
-  const nodes=f.steps.map(s=>'    <bpmn:'+tag(s)+' id="'+nid(s)+'" name="'+xe((s.n!=null?s.n+'. ':'')+s.name+(s.medianMin!=null?' ('+s.medianMin+' min)':''))+'" />').join('\n');
-  const flows=[]; let fi=0;
-  f.steps.forEach(s=>(s.next||[]).forEach(nx=>{ const t=f.steps.find(y=>String(y.id)===String(nx)); if(!t) return;
-    flows.push('    <bpmn:sequenceFlow id="Flow_'+(++fi)+'" sourceRef="'+nid(s)+'" targetRef="'+nid(t)+'" />'); }));
-  const laneSet = lanes.length ? '    <bpmn:laneSet id="LaneSet_1">\n'
-    + lanes.map((l,i)=>'      <bpmn:lane id="Lane_'+(i+1)+'" name="'+xe(l)+'">\n'
-        + f.steps.filter(s=>s.lane===l).map(s=>'        <bpmn:flowNodeRef>'+nid(s)+'</bpmn:flowNodeRef>').join('\n')
-        + '\n      </bpmn:lane>').join('\n') + '\n    </bpmn:laneSet>\n' : '';
+  const slug=xslug(doc.id).replace(/-/g,'_'), pid='Process_'+slug, xe=s=>esc(xtext(s));
+  const m=xBpmnModel(doc);
+  const refs=n=>n.inc.map(i=>'      <bpmn:incoming>'+i+'</bpmn:incoming>').concat(
+                 n.out.map(o=>'      <bpmn:outgoing>'+o+'</bpmn:outgoing>')).join('\n');
+  const nodeXml=n=>{ const r=refs(n);
+    return '    <bpmn:'+n.tag+' id="'+n.id+'" name="'+xe(n.name)+'"'+(r?'>\n'+r+'\n    </bpmn:'+n.tag+'>':' />'); };
+  const laneSet = m.lanes.length ? '    <bpmn:laneSet id="LaneSet_1">\n'
+    + m.lanes.map((l,i)=>'      <bpmn:lane id="Lane_'+(i+1)+'" name="'+xe(l)+'">\n'
+      + m.nodes.filter(n=>n.lane===i).map(n=>'        <bpmn:flowNodeRef>'+n.id+'</bpmn:flowNodeRef>').join('\n')
+      + '\n      </bpmn:lane>').join('\n') + '\n    </bpmn:laneSet>\n' : '';
+  const nodes=m.nodes.map(nodeXml).join('\n');
+  const flows=m.flows.map(e=>'    <bpmn:sequenceFlow id="'+e.id+'" sourceRef="'+e.src.id+'" targetRef="'+e.tgt.id+'" />').join('\n');
+  const bounds=(x,y,w,h)=>'<dc:Bounds x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" />';
+  const di=[];
+  di.push('      <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">'
+    +bounds(XB.X,XB.Y,m.poolW,m.poolH)+'</bpmndi:BPMNShape>');
+  m.lanes.forEach((l,i)=>di.push('      <bpmndi:BPMNShape id="Lane_'+(i+1)+'_di" bpmnElement="Lane_'+(i+1)+'" isHorizontal="true">'
+    +bounds(XB.X+XB.HDR,XB.Y+i*XB.LANE,m.poolW-XB.HDR,XB.LANE)+'</bpmndi:BPMNShape>'));
+  m.nodes.forEach(n=>di.push('      <bpmndi:BPMNShape id="'+n.id+'_di" bpmnElement="'+n.id+'">'
+    +bounds(n.x,n.y,n.w,n.h)+'</bpmndi:BPMNShape>'));
+  m.flows.forEach(e=>di.push('      <bpmndi:BPMNEdge id="'+e.id+'_di" bpmnElement="'+e.id+'">'
+    +xBpmnWaypoints(e).map(p=>'<di:waypoint x="'+p[0]+'" y="'+p[1]+'" />').join('')+'</bpmndi:BPMNEdge>'));
   return '<?xml version="1.0" encoding="UTF-8"?>\n'
-    +'<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
-    +'id="Definitions_'+xslug(doc.id).replace(/-/g,'_')+'" targetNamespace="http://silow.ai/bpmn" exporter="Silow" exporterVersion="1">\n'
+    +'<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" '
+    +'xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" '
+    +'xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" '
+    +'xmlns:di="http://www.omg.org/spec/DD/20100524/DI" '
+    +'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+    +'id="Definitions_'+slug+'" targetNamespace="http://silow.ai/bpmn" exporter="Silow" exporterVersion="2">\n'
     +'  <bpmn:collaboration id="Collab_1"><bpmn:participant id="Participant_1" name="'+xe(doc.title)+'" processRef="'+pid+'" /></bpmn:collaboration>\n'
     +'  <bpmn:process id="'+pid+'" name="'+xe(doc.title)+'" isExecutable="false">\n'
-    +laneSet+nodes+(flows.length?'\n'+flows.join('\n'):'')+'\n  </bpmn:process>\n'
+    +laneSet+nodes+(flows?'\n'+flows:'')+'\n  </bpmn:process>\n'
+    +'  <bpmndi:BPMNDiagram id="BPMNDiagram_1" name="'+xe(doc.title)+'">\n'
+    +'    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collab_1">\n'
+    +di.join('\n')+'\n'
+    +'    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n'
     +'  <!-- '+xe(XSTAMP)+' -->\n'
     +'</bpmn:definitions>\n';
 }
@@ -5273,7 +5371,7 @@ function xRows(doc){
     {id:'pdf',  g:'f', mark:'PDF', n:'PDF',        d:'Opens your print dialog — choose “Save as PDF”.', a:'out'},
     {id:'md',   g:'f', mark:'M',   n:'Markdown',   d:'Plain text. Paste it into a ticket, a wiki or an LLM.', a:'dl'},
     {id:'visio',g:'f', mark:'V',   n:'Visio',      d:'Data Visualizer CSV — Visio draws the flowchart from these rows.', a:'dl', off:!flow, why:noFlow},
-    {id:'bpmn', g:'f', mark:'B',   n:'BPMN 2.0',   d:'Standard BPMN XML — Visio, Lucid and Camunda import it.', a:'dl', off:!flow, why:noFlow},
+    {id:'bpmn', g:'f', mark:'B',   n:'BPMN 2.0',   d:'BPMN 2.0 XML with the diagram layout — opens in Camunda Modeler and bpmn.io.', a:'dl', off:!flow, why:noFlow},
     {id:'gdocs',g:'s', mark:'G',   n:'Google Docs',d:'Copies the Markdown and opens a blank Google Doc in a new tab — paste it in.', a:'out'},
     {id:'notion',g:'s',mark:'N',   n:'Notion',     d:'Copies the Markdown and opens a new Notion page in a new tab — paste it in.', a:'out'},
     {id:'csv',  g:'m', mark:'C',   n:'CSV data',   d:data?('The '+xtext(doc.data.name||'table')+' table on this page, as rows.'):'The page’s table, as rows.', a:'dl', off:!data, why:'This page has no single data table'},
@@ -5444,7 +5542,7 @@ document.addEventListener('click', e=>{
 addEventListener('keydown', e=>{
   if(!XP) return;
   if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); xpClose(); return; }
-  if(e.key==='Tab') xpTrap(e);
+  if(e.key==='Tab'){ e.stopPropagation(); xpTrap(e); }   /* the popover owns the trap while it is open, even over a modal */
 }, true);
 addEventListener('resize', ()=>{ if(XP) xpPlace(); });
 addEventListener('scroll', ()=>{ if(XP) xpPlace(); }, true);
@@ -5459,8 +5557,9 @@ function xKeyFor(){
     case 'team':    return 'team/'+S.team;
     case 'dept':    return S.dept ? 'dept/'+S.dept : 'departments';
     case 'plan':    return S.tab==='proc' ? 'process/'+S.proc : S.tab==='maps' ? 'maps' : 'plan';
+    case 'cases': { const c=CX.current(); return c ? 'case/'+c.id : null; }
   }
-  return null;   /* #case/… belongs to the process renderer, which brings its own trigger */
+  return null;
 }
 function xSyncTrigger(){
   const b=$('#xtrig'); if(!b) return;
@@ -5662,27 +5761,204 @@ function docPerson(id){
     ],
     data:{ name:'work-streams', head, rows } };
 }
+/* ---------- the automation blueprint as an exportable document ----------
+   The drawer on #plan carries the strongest evidence this product offers for "could a
+   developer build an agent from this": trigger, inputs, the automation, the human checks,
+   the outputs, the acceptance criteria and the out-of-scope boundary. All of it now leaves
+   the app: as prose sections (Word, PDF, Markdown) and as a structured `blueprint` object
+   (JSON), from the process export, the plan export and the drawer's own export. */
+function bpData(cid){
+  const c=CX.cases_.find(x=>x.id===cid); if(!c || !c.recommendation) return null;
+  const r=c.recommendation, b=CX.bn(c), x=caseRoi(c), wait=CX.isWait(c);
+  return {
+    case:cid, process:CX.SHORT[cid], title:r.title, summary:xtext(r.what), complexity:r.complexity,
+    trigger:xtext(r.trigger),
+    inputs:r.inputs.map(xtext),
+    automation:xtext(r.what),
+    systems:r.systems.map(xtext),
+    human_checks:r.manual_touchpoints.map(xtext),
+    stays_with_people:r.stays_with_people.map(xtext),
+    outputs:r.outputs.map(xtext),
+    acceptance_criteria:r.acceptance.map(xtext),
+    out_of_scope:xtext(c.extra.boundary),
+    target_step:{ n:b.n, name:xtext(CX.sname(c,b.n)), typical:CX.dur(CX.med(b)),
+      share_of_process_time:CX.pct(CX.share(b)), why:xtext(c.bottleneck.why) },
+    volume:c.x.runs_per_day!=null ? (+c.x.runs_per_day).toFixed(1)+' '+CX.UNIT[cid]+'s a day' : null,
+    model:{
+      hours_back_per_week: wait?null:+x.back.toFixed(1),
+      value_per_month: wait?null:Math.round(x.month),
+      loaded_hourly_cost: S.cost,
+      build_effort_person_weeks: x.eff,
+      build_effort_range_person_weeks: x.effLow!=null?[x.effLow,x.effHigh]:null,
+      comparable_items_used: x.effSamples,
+      payback_weeks: x.payback==null?null:Math.round(x.payback),
+      payback_range_weeks: x.paybackLow==null?null:[+x.paybackLow.toFixed(1),+x.paybackHigh.toFixed(1)],
+      assumed_takeover_share: r.assumed_takeover_share!=null?r.assumed_takeover_share:null,
+      assumption_scope: r.assumption_scope?xtext(r.assumption_scope):null,
+      counts_returned_labor: !wait,
+      estimate: xtext(CX.estimateText(c)),
+      basis: xtext(casePaybackBasis(c,x)),
+    },
+    in_pilot_scope: S.inPlan.has('case-'+cid),
+  };
+}
+function bpSections(cid, pfx){
+  const d=bpData(cid); if(!d) return [];
+  const H=h=>(pfx||'Automation blueprint')+' · '+h, m=d.model, num=[];
+  num.push(['Hours back per week', m.hours_back_per_week==null?'— shorter waits, not returned labor':m.hours_back_per_week.toFixed(1)+' h']);
+  num.push(['Value per month', m.value_per_month==null?'— not counted as returned time':money(m.value_per_month)+' at '+money(m.loaded_hourly_cost)+'/h']);
+  num.push(['Build effort', m.build_effort_person_weeks==null?'—':'≈'+m.build_effort_person_weeks+' person-weeks'
+    +(m.build_effort_range_person_weeks?' · range '+m.build_effort_range_person_weeks[0]+'–'+m.build_effort_range_person_weeks[1]+' from '+m.comparable_items_used+' comparable plan items':'')]);
+  num.push(['Payback', m.payback_weeks==null?'—':'≈'+m.payback_weeks+' weeks'
+    +(m.payback_range_weeks?' · range '+m.payback_range_weeks[0]+'–'+m.payback_range_weeks[1]+' weeks':'')]);
+  if(m.assumed_takeover_share!=null) num.push(['Assumed share an agent takes', Math.round(m.assumed_takeover_share*100)+'%'+(m.assumption_scope?' · '+m.assumption_scope:'')]);
+  if(d.volume) num.push(['Run volume', d.volume]);
+  num.push(['Complexity', d.complexity]);
+  num.push(['Loaded hourly cost used', money(m.loaded_hourly_cost)+'/h']);
+  return [
+    {h:H('what the automation does'), p:d.title+' — '+d.summary},
+    {h:H('trigger'), p:d.trigger},
+    {h:H('inputs'), list:d.inputs},
+    {h:H('systems it touches'), list:d.systems},
+    {h:H('human checks'), list:d.human_checks},
+    {h:H('stays with people'), list:d.stays_with_people},
+    {h:H('outputs'), list:d.outputs},
+    {h:H('acceptance criteria'), list:d.acceptance_criteria},
+    {h:H('out of scope'), p:d.out_of_scope},
+    {h:H('target step'), p:d.target_step.name+' — typical '+d.target_step.typical
+      +', '+d.target_step.share_of_process_time+' of the process time. '+d.target_step.why},
+    {h:H('the model, its arithmetic and its assumptions'), table:{head:['Measure','Value'], rows:num}},
+    {h:H('how the estimate is derived'), list:[m.estimate, m.basis]},
+  ];
+}
+const BP_OPEN = 'What this blueprint does not answer, and an integrator will ask first: how each system is reached (API, database or screen only), how the “permitted” check is evaluated, concurrency and acceptable latency, the full error taxonomy with retry and escalation behaviour, test data, and the build order across the plan.';
+function docBlueprint(cid){
+  const d=bpData(cid); if(!d) return null;
+  return { kind:'plan', id:'blueprint/'+cid, title:d.title+' · automation blueprint',
+    subtitle:'Harbor Mutual · '+d.process+' · '+d.complexity+' complexity',
+    meta:[['Workspace','Harbor Mutual (sample data)'],['Process',d.process],
+      ['Target step',d.target_step.name],['Complexity',d.complexity],
+      ['Hours back per week',d.model.hours_back_per_week==null?'—':d.model.hours_back_per_week.toFixed(1)+' h'],
+      ['Build effort',d.model.build_effort_person_weeks==null?'—':'≈'+d.model.build_effort_person_weeks+' person-weeks'],
+      ['In pilot scope',d.in_pilot_scope?'yes':'no'],['Exported',xtoday()]],
+    sections:[...bpSections(cid,'Blueprint'),
+      {h:'Still open before anyone writes code', p:BP_OPEN},
+      {h:'Notes', list:['This is a scoping specification, not a build specification.', ...xStamp()]}],
+    blueprint:d };
+}
+function docSuggestion(id){
+  const s=SUG[id]; if(!s) return null; const x=sugRoi(id,S.cost);
+  return { kind:'plan', id:'suggestion/'+id, title:xtext(s.t)+' · automation suggestion',
+    subtitle:'Harbor Mutual · '+DIR[s.dir].n+' · '+s.cx+' effort',
+    meta:[['Workspace','Harbor Mutual (sample data)'],['Direction',DIR[s.dir].n],
+      ['Teams',x.teams.map(t=>TEAM[t].name).join('; ')],['People',String(x.people.length)],
+      ['Hours back per week',x.back.toFixed(1)+' h'],['Value per month',money(x.month)+' at '+money(S.cost)+'/h'],
+      ['Build effort',s.eff+' person-weeks'],['Payback','≈'+Math.round(x.payback)+' weeks'],
+      ['Approver',s.approver],['In pilot scope',S.inPlan.has(id)?'yes':'no'],['Exported',xtoday()]],
+    sections:[
+      {h:'What it is', p:s.what},
+      {h:'Evidence · from 3 weeks of recordings', table:{head:['Measure','Value'], rows:[
+        ['Sessions on the affected tasks', x.eps.toLocaleString('en-US')],
+        ['Hours on those tasks, per week', x.obs.toFixed(1)+' h'],
+        ['Share an agent can take', Math.round(s.take*100)+'%'],
+        ['People', x.people.length+' · '+x.teams.map(t=>TEAM[t].name).join(', ')],
+        ['Apps', x.apps.join(', ')],
+        ['Hours back per week', x.back.toFixed(1)+' h = '+x.obs.toFixed(1)+' h × '+Math.round(s.take*100)+'%'],
+        ['Value per month', money(x.month)+' = '+x.back.toFixed(1)+' h × 4.33 weeks × '+money(S.cost)+'/h'],
+        ['Payback', '≈'+Math.round(x.payback)+' weeks = '+s.eff+' person-weeks × 40 h ÷ '+x.back.toFixed(1)+' h/week'],
+      ]}},
+      {h:'What gets built', list:s.build},
+      {h:'First steps', list:s.first},
+      {h:'Stays human', list:s.human},
+      {h:'Approval', p:'Approver: '+s.approver+'. Runs inside your perimeter; every run is in the audit log.'},
+      {h:'Still open before anyone writes code', p:BP_OPEN},
+      {h:'Notes', list:['Model, not a promise: value = hours back × 4.33 weeks × loaded hourly cost.', ...xStamp()]},
+    ]};
+}
+
+/* ---------- pilot scope: a real, persisted selection ---------- */
+const XPILOT_KEY = (document.body.dataset.storageNamespace||'harbor')+':pilot';
+function pilotItem(key){
+  key=String(key);
+  if(key.startsWith('case-')){
+    const cid=key.slice(5), c=CX.cases_.find(x=>x.id===cid); if(!c) return null;
+    const x=caseRoi(c), wait=CX.isWait(c);
+    return { key, kind:'Process blueprint', name:xtext(c.recommendation.title), where:CX.SHORT[cid],
+      back:wait?null:x.back, month:wait?null:x.month, eff:x.eff, effApprox:true, approver:'—',
+      people:c.people_ids.length, teams:[...new Set(c.people_ids.map(CX.ownerTeam))].map(t=>TEAM[t]?.name||t).join('; ') };
+  }
+  const s=SUG[key]; if(!s) return null; const x=sugRoi(key,S.cost);
+  return { key, kind:DIR[s.dir].n, name:xtext(s.t), where:x.teams.map(t=>TEAM[t].name).join(' + '),
+    back:x.back, month:x.month, eff:s.eff, effApprox:false, approver:s.approver,
+    people:x.people.length, teams:x.teams.map(t=>TEAM[t].name).join('; ') };
+}
+const pilotItems = () => [...S.inPlan].map(pilotItem).filter(Boolean);
+function savePilot(){ try{ localStorage.setItem(XPILOT_KEY, JSON.stringify([...S.inPlan])); }catch(e){} }
+function loadPilot(){
+  let a=[]; try{ a=JSON.parse(localStorage.getItem(XPILOT_KEY)||'[]'); }catch(e){ a=[]; }
+  if(Array.isArray(a)) a.forEach(k=>{ if(pilotItem(k)) S.inPlan.add(String(k)); });
+}
+function pilotToggle(key){ if(S.inPlan.has(key)) S.inPlan.delete(key); else S.inPlan.add(key); savePilot(); }
+function pilotBlock(){
+  const items=pilotItems(), back=items.reduce((a,i)=>a+(i.back||0),0), eff=items.reduce((a,i)=>a+(i.eff||0),0);
+  const rows=items.map(i=>`<div class="sug pilot-r" data-sug="${esc(i.key)}" role="button" tabindex="0">
+      <div><div class="t">${esc(i.name)}</div><div class="d">${esc(i.kind)} · ${esc(i.where)} · approver: ${esc(i.approver)}</div></div>
+      <div class="v"><b>${i.back==null?'—':i.back.toFixed(1)+' h'}</b><div class="d">per week</div></div>
+      <div class="v xm"><b>${i.month==null?'—':money(i.month)}</b><div class="d">per month</div></div>
+      <div class="v xm">${i.eff==null?'—':(i.effApprox?'≈':'')+i.eff+' p-wk'}</div>
+      <button class="btn ghost pilot-x" data-pilot-rm="${esc(i.key)}" title="Remove from the pilot scope" aria-label="Remove ${esc(i.name)} from the pilot scope">Remove</button>
+    </div>`).join('');
+  return `<section class="dir pilot-b" id="pilot-scope">
+    <div class="dir-h"><div class="nm"><b>Pilot scope</b><small>${items.length?'What you have picked to build first. It is saved in this browser and goes into the plan export.':'Nothing picked yet. Open any suggestion or blueprint below and use “Add to pilot scope”; what you pick is listed here and travels into the plan export.'}</small></div>
+      <div class="m hl"><small>Items</small><b>${items.length}</b></div>
+      <div class="m hl"><small>Hours back / wk</small><b>${items.length?back.toFixed(1)+' h':'—'}</b></div>
+      <div class="m"><small>Value / month</small><b>${items.length?money(back*WEEKS_PER_MONTH*S.cost):'—'}</b></div>
+      <div class="m"><small>Effort</small><b>${items.length?eff+' p-wk':'—'}</b></div></div>
+    ${rows}</section>`;
+}
+function bindPilot(){
+  $$('#v-plan [data-pilot-rm]').forEach(b=>b.onclick=e=>{ e.stopPropagation();
+    S.inPlan.delete(b.dataset.pilotRm); savePilot(); rPlan(); if(M.key) fillModal(M.key); });
+}
+
 function docPlan(){
   const rois=DIRS.map(d=>({d,r:dirRoi(d.id,S.cost)}));
   const back=rois.reduce((a,x)=>a+x.r.back,0), eff=rois.reduce((a,x)=>a+x.r.eff,0);
   const ppl=new Set(); PLAN.forEach(s=>evidence(s.id).people.forEach(p=>ppl.add(p)));
   const month=back*WEEKS_PER_MONTH*S.cost;
   const head=['Suggestion','Direction','Teams','People','Hours back per week','Value per month','Build effort (person-weeks)','Approver'];
+  /* all 20 rows the page shows: the 15 work-stream suggestions plus the 5 process blueprints */
+  const bpCases=CX.cases_.filter(c=>!PLAN.some(s=>CX.sugStep(s.id)?.c.id===c.id));
   const rows=PLAN.map(s=>{ const x=sugRoi(s.id,S.cost);
     return [s.t, DIR[s.dir].n, x.teams.map(t=>TEAM[t].name).join('; '), x.people.length, x.back.toFixed(1), money(x.month), s.eff, s.approver]; });
+  bpCases.forEach(c=>{ const i=pilotItem('case-'+c.id);
+    rows.push([i.name, 'Process blueprint · '+i.where, i.teams, i.people,
+      i.back==null?'—':i.back.toFixed(1), i.month==null?'—':money(i.month),
+      i.eff==null?'—':'≈'+i.eff, '—']); });
   return { kind:'plan', id:'plan', title:'Harbor Mutual · automation plan', subtitle:'Built from 3 weeks of recorded work · Oct 13–31',
     meta:[['Workspace','Harbor Mutual (sample data)'],['Period','Oct 13–31 (3-week average)'],['Hours back per week',back.toFixed(1)+' h'],
       ['People affected',ppl.size+' of '+PEOPLE.length],['Value per month',money(month)+' at '+money(S.cost)+'/h'],
       ['Build effort',eff+' person-weeks'],['Payback','≈'+Math.round(eff*40/back)+' weeks overall'],['Names',xNames()],['Exported',xtoday()]],
     sections:[
       {h:'How the plan is built', p:'Every suggestion links back to the sessions, hours and people it came from. Agents draft and prepare; a named person approves every consequential step. Hours back = observed hours on the affected tasks × the share an agent can take. Effort is in person-weeks of build and review.'},
+      {h:'Pilot scope', p:pilotItems().length
+          ? plural(pilotItems().length,'item')+' picked to build first, '+pilotItems().reduce((a,i)=>a+(i.back||0),0).toFixed(1)+' h back a week between them.'
+          : 'Nothing has been added to the pilot scope yet. On the Automation plan, open a suggestion or a blueprint and use “Add to pilot scope”.',
+        table:pilotItems().length?{head:['Item','Kind','Where','Hours back per week','Value per month','Build effort'],
+          rows:pilotItems().map(i=>[i.name, i.kind, i.where, i.back==null?'—':i.back.toFixed(1), i.month==null?'—':money(i.month), i.eff==null?'—':(i.effApprox?'≈':'')+i.eff+' p-wk'])}:undefined},
       {h:'By direction', table:{head:['Direction','Suggestions','Hours back per week','People','Build effort','Value per month'],
         rows:rois.map(x=>[x.d.n, x.r.items.length, x.r.back.toFixed(1), x.r.people, x.r.eff+' p-wk', money(x.r.month)])}},
-      {h:'Every suggestion', table:{head, rows}},
+      {h:'Every suggestion', p:'All '+rows.length+' items on the plan: '+PLAN.length+' work-stream suggestions and '+bpCases.length+' process blueprints.', table:{head, rows}},
+      ...bpCases.flatMap(c=>bpSections(c.id, 'Blueprint · '+CX.SHORT[c.id])),
+      {h:'Still open on every blueprint before anyone writes code', p:BP_OPEN},
       {h:'Notes', list:['Model, not a promise: value = hours back × 4.33 weeks × loaded hourly cost; payback = build effort ÷ hours back. Payback models released time, not cash savings.',
         'Blueprint build effort uses the median existing plan effort at the same complexity; blueprint estimates are not added to the work-stream totals.',
         XSTAMP]},
     ],
+    pilotScope:pilotItems().map(i=>({key:i.key, name:i.name, kind:i.kind, where:i.where,
+      hours_back_per_week:i.back==null?null:+i.back.toFixed(1),
+      value_per_month:i.month==null?null:Math.round(i.month), build_effort_person_weeks:i.eff})),
+    blueprints:bpCases.map(c=>bpData(c.id)),
     data:{ name:'suggestions', head, rows } };
 }
 function docMaps(){
@@ -5738,6 +6014,15 @@ DEPTS.forEach(([id])=>SilowExport.registerSource('dept/'+id, ()=>docDept(id)));
 TEAMS.forEach(t=>SilowExport.registerSource('team/'+t.id, ()=>docTeam(t.id)));
 PEOPLE.forEach(p=>SilowExport.registerSource('person/'+p.id, ()=>docPerson(p.id)));
 PROCS.forEach(pr=>SilowExport.registerSource('process/'+pr.id, ()=>docProcess(pr.id)));
+/* the process deep-dive pages: the document is built by guides.js (it owns the case renderer),
+   so the source resolves it lazily — script-3.js runs before guides.js is loaded */
+CX.cases_.forEach(c=>SilowExport.registerSource('case/'+c.id, ()=>{
+  const g=window.SilowGuides;
+  return (g && g.docFor && g.docFor.process) ? g.docFor.process(c.id) : null; }));
+CX.cases_.forEach(c=>SilowExport.registerSource('blueprint/'+c.id, ()=>docBlueprint(c.id)));
+PLAN.forEach(s=>SilowExport.registerSource('suggestion/'+s.id, ()=>docSuggestion(s.id)));
+/* guides.js folds the blueprint into the process export through this (see REPORT-fixes.md) */
+window.SilowBlueprint = { data:bpData, sections:bpSections, doc:docBlueprint, open:BP_OPEN };
 
 /* ---------- Home: recording & privacy status ---------- */
 function homeRec(){
@@ -5760,6 +6045,12 @@ function bindRec(){
 
 /* ---------- Personal reports index: rows, sorting ---------- */
 const XSORTS = [['group','Grouped by department'],['h','Recorded hours'],['d','Days over 4 h'],['i','Items completed'],['r','Items / hour']];
+/* What each sort does and does not separate in this sample, so the column is not read as a
+   ranking it cannot support. Hover text only — no second disclaimer on the page itself. */
+const XSORT_WHY = {
+  d:'Weekdays with over 4 h of recorded work screen time. In this sample every person reaches 15 of 15, so this column separates nobody — the shortest recorded person-day is 342 minutes.',
+  r:'Items completed ÷ recorded hours. Work differs between roles, so this mostly orders roles rather than people: inside a role the spread here is under 1.05×. It compares a person with themself over time.',
+};
 function xPeopleRows(per=S.per){
   return PEOPLE.map(p=>{ const pw=PW(p.id,per), top=[...pw.cats].sort((a,b)=>b.dh-a.dh)[0], r=ROLES[p.role];
     return { p, pw, role:r.title, name:nm(p), team:TEAM[p.team].name, dept:DEPT_NAME[TEAM_DEPT[p.team]],
@@ -5785,6 +6076,7 @@ function xMountTrigger(){
 }
 
 loadMsgs();
+loadPilot();
 shell();
 legacyPlan(); fromHash(); render();
 { const mk=modalIn();   /* deep link / reload with a modal: put the page's own entry underneath, so Back closes the modal and stays */
@@ -5934,6 +6226,41 @@ if(document.body.classList.contains('embed')) addEventListener('keydown',e=>{ if
     }).join(', then ');
     return head + txt + '.';
   }
+  /* The lead line and the recorded `how` prose have different provenance — the lead is
+     assembled from actions[], the body is the measured procedure text — but they usually
+     describe the same actions in a different voice, and a guide that states every step
+     twice reads as padding. So the lead is kept only when it adds content the body does
+     not already carry: if half or more of its content words reappear in the body, it is
+     dropped and the body stands alone. (The imperative voice is still available per step
+     as an explicit editor rewrite, which is where a choice belongs.) */
+  var STOP = ('a an the and or of to in on at for from with by then into as is are was were be been it its this that these those'
+    + ' next new one two three all any each other same their them they you your our not no if when while after before'
+    + ' up down out over under again more most some such only own so than too very can will just').split(' ');
+  var STOPSET = {}; STOP.forEach(function (w) { STOPSET[w] = 1; });
+  function contentWords(t) {
+    var out = [], seen = {};
+    String(t || '').toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).forEach(function (w) {
+      w = w.replace(/^-+|-+$/g, '');
+      if (w.length < 3 || STOPSET[w] || seen[w]) return;
+      seen[w] = 1; out.push(w);
+    });
+    return out;
+  }
+  function stem(w) { return w.replace(/(ies|ied)$/, 'y').replace(/(es|ed|ing|s)$/, ''); }
+  function leadOverlap(lead, body) {
+    var L = contentWords(lead), B = {}, hit = 0;
+    if (!L.length || !String(body || '').trim()) return 0;
+    contentWords(body).forEach(function (w) { B[stem(w)] = 1; });
+    L.forEach(function (w) { if (B[stem(w)]) hit++; });
+    return hit / L.length;
+  }
+  var LEAD_MAX_OVERLAP = 0.5;
+  function leadFor(c, n, body) {
+    var lead = leadOf(c, n);
+    if (!lead) return '';
+    if (leadOverlap(lead, body) >= LEAD_MAX_OVERLAP) return '';
+    return lead;
+  }
   /* three prepared rewrites for "Ask Silow". All three are built from this step's own
      recorded text and action data — nothing is fetched and nothing is modelled. */
   function rewrites(c, n) {
@@ -5974,10 +6301,11 @@ if(document.body.classList.contains('embed')) addEventListener('keydown',e=>{ if
     var g = guideText(c, n), s = c.steps[n - 1], blocks = [];
     if (opts.tips && g.fast) blocks.push({ uid: uid(), k: realFast(g) ? 'tip' : 'pace', t: expand(c, g.fast) });
     if (opts.exceptions && realException(g)) blocks.push({ uid: uid(), k: 'warn', t: expand(c, g.exceptions) });
+    var body = expand(c, g.how || '');
     return {
       uid: uid(), n: n, title: s.name, app: s.system,
-      lead: leadOf(c, n),
-      body: expand(c, g.how || ''),
+      lead: leadFor(c, n, body),
+      body: body,
       shot: wantShot(c, n, opts.shots),
       blocks: blocks
     };
@@ -6082,7 +6410,11 @@ if(document.body.classList.contains('embed')) addEventListener('keydown',e=>{ if
     var c = byId(doc.caseId), x = CX(), o = doc.opts || {}, chips = [];
     var hot = !!(c && x && x.bn && st.n && x.bn(c).n === st.n);
     if (st.n && c) chips.push('<span class="g-chip">Step ' + st.n + ' of ' + c.steps.length + '</span>');
-    if (o.systems && st.app) chips.push('<span class="g-chip app">' + E(st.app) + '</span>');
+    /* The application is named once in the step's chrome: by the capture frame's label when
+       the step carries a frame, otherwise by this chip. The body prose names its system too,
+       which is how documentation reads — but four mentions of the same application in one
+       step block is padding, so the chip stands down where the frame already says it. */
+    if (o.systems && st.app && !st.shot) chips.push('<span class="g-chip app">' + E(st.app) + '</span>');
     if (o.timings && st.n && c) chips.push('<span class="g-chip" title="Typical time measured for this step in the sample period">' + E(dur(med(c, st.n))) + ' typical</span>');
     if (o.who && st.n && c) chips.push('<span class="g-chip">' + E(whoOf(c, st.n)) + '</span>');
     var ops = '';
@@ -6197,26 +6529,43 @@ if(document.body.classList.contains('embed')) addEventListener('keydown',e=>{ if
     });
   }
   var STEPHEAD = ['Step', 'Name', 'Application', 'Team', 'Typical time', 'Share of the time'];
+  /* The automation blueprint lives in script-3.js (it owns the plan, the ROI model and the
+     drawer). The process export folds it in through window.SilowBlueprint so that the
+     trigger, inputs, human checks, outputs, acceptance criteria and the out-of-scope
+     boundary leave the app with the process document instead of only being on screen. */
+  function bpOf(caseId) {
+    var B = window.SilowBlueprint;
+    if (!B) return { sections: [], data: null };
+    try {
+      return { sections: B.sections(caseId, 'Automation blueprint') || [], data: B.data(caseId) || null,
+               open: B.open || null };
+    } catch (e) { return { sections: [], data: null }; }
+  }
   function docForProcess(caseId) {
     var c = byId(caseId), x = CX(); if (!c) return null;
     var order = procOrder(c);
     var b = x && x.bn ? x.bn(c) : null;
-    return {
+    var bp = bpOf(caseId);
+    var secs = [
+      { h: 'What this process is', p: (x && x.desc ? x.desc(c) : c.title) },
+      { h: 'Steps in process order', table: { head: STEPHEAD, rows: stepRows(c, order) } },
+      { h: 'Where the time goes', p: (c.bottleneck && c.bottleneck.why) || '' },
+      { h: 'Paths people take', list: (c.variants || []).map(function (v) { return v.name + ' — ' + (x && x.pct ? x.pct(v.share_pct_of_runs) : '') + ' of runs. ' + (v.description || ''); }) }
+    ].concat(bp.sections);
+    if (bp.open) secs.push({ h: 'Still open before anyone writes code', p: bp.open });
+    var d = {
       kind: 'process', id: 'case/' + c.id, title: c.title + ' — process map',
       subtitle: 'Harbor Mutual · ' + ((x && x.SHORT) ? x.SHORT[c.id] : c.id),
       meta: [['Steps', String(c.steps.length)], ['Team', c.team || '—'],
         ['Typical run', dur(c.summary.elapsed_run_time.median)],
         ['Slowest step', b ? ('Step ' + b.n + ' · ' + b.name + ' · ' + dur(med(c, b.n))) : '—'],
         ['Guides', String(listFor(c.id).length)]],
-      sections: [
-        { h: 'What this process is', p: (x && x.desc ? x.desc(c) : c.title) },
-        { h: 'Steps in process order', table: { head: STEPHEAD, rows: stepRows(c, order) } },
-        { h: 'Where the time goes', p: (c.bottleneck && c.bottleneck.why) || '' },
-        { h: 'Paths people take', list: (c.variants || []).map(function (v) { return v.name + ' — ' + (x && x.pct ? x.pct(v.share_pct_of_runs) : '') + ' of runs. ' + (v.description || ''); }) }
-      ],
+      sections: secs,
       flow: flowOf(c, order, null),
       data: { name: 'steps', head: STEPHEAD, rows: stepRows(c, order) }
     };
+    if (bp.data) d.blueprint = bp.data;
+    return d;
   }
   function docForStep(caseId, n) {
     var c = byId(caseId), x = CX(); if (!c) return null;
@@ -6810,9 +7159,8 @@ if(document.body.classList.contains('embed')) addEventListener('keydown',e=>{ if
       '<div class="sgb-a">' +
       '<button class="sgbtn solid" data-sgnew="' + A(caseId) + '">' + (gs.length ? 'New guide' : 'Create a guide') + '</button>' +
       (gs.length ? '<button class="sgbtn" data-sgopen="' + A(gs[0].id) + '">Open the latest</button>' : '') +
-      expTrigger('Export to Word, PDF, Visio or BPMN', 'process:' + caseId, 'sgbtn') +
       '</div></div>' +
-      (gs.length ? '<div class="sgb-list">' + rows + '</div>' : '<div class="sgb-empty">A guide is a numbered walk-through of the steps you pick: the instruction, the application, optional simulated screens of the masked app, timings, exceptions and the fastest path recorded. You can edit every line afterwards.</div>') +
+      (gs.length ? '<div class="sgb-list">' + rows + '</div>' : '<div class="sgb-empty">Pick the steps, generate, then edit any line \u2014 the words come from the recording.</div>') +
       '<div class="sgb-for">' +
       '<span>Who it is for · <b>people doing this work, and whoever automates it</b></span>' +
       '<span>Source · <b>the ' + c.steps.length + ' recorded steps, nothing typed by hand</b></span>' +

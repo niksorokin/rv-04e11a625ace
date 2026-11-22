@@ -405,6 +405,42 @@
   .g3{ grid-template-columns:1fr; gap:28px; }
   .g3 > div, .g3 > div:first-child{ border-left:0; padding:0; }
 }
+
+/* v30 r4: lane timeline, case cards */
+.tg{ margin-top:5.5vh; width:min(1240px,90vw); text-align:left; font-size:clamp(14px,1.05vw,17px); }
+.tg-head, .tg-row{ display:grid; grid-template-columns:clamp(150px,13vw,210px) 1fr; align-items:center; }
+.tg-weeks{ display:grid; grid-template-columns:repeat(4,1fr); }
+.tg-weeks b{ font-family:var(--mono); font-weight:400; font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); text-align:center; padding-bottom:12px; }
+.tg-row{ height:58px; }
+.tg-l{ font-weight:500; color:var(--ink); letter-spacing:-.01em; padding-right:18px; }
+.tg-t{ position:relative; height:100%; background:linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/25% 100%; box-shadow:inset -1px 0 0 var(--line); border-top:1px solid var(--line); }
+.tg-row:last-child .tg-t{ border-bottom:1px solid var(--line); }
+.tg-bar{ position:absolute; top:11px; height:36px; border-radius:10px; display:flex; align-items:center; padding:0 14px; font-style:normal; white-space:nowrap; overflow:hidden; }
+.tg-bar span{ overflow:hidden; text-overflow:ellipsis; }
+.tg-bar.tg-on{ background:#fff; color:var(--ink); box-shadow:inset 0 0 0 1px var(--line-2); }
+.tg-bar.tg-rec{ background:var(--paper-2); color:var(--ink-2); }
+.tg-bar.tg-out{ background:var(--accent); color:#fff; }
+.tg-bar.tg-end{ background:var(--ink); color:#fff; justify-content:center; }
+.tg-pin{ position:absolute; top:50%; transform:translate(-50%,-50%); font-style:normal; display:flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; background:#fff; box-shadow:inset 0 0 0 1.5px var(--accent); color:var(--accent); font-weight:500; white-space:nowrap; }
+.tg-pin::before{ content:""; width:7px; height:7px; border-radius:50%; background:var(--accent); }
+.s-cases{ justify-content:center; }
+.s-cases h2{ font-size:clamp(40px,4.2vw,76px); }
+.cs3{ margin-top:5vh; width:min(1360px,92vw); display:grid; grid-template-columns:repeat(3,1fr); gap:clamp(16px,1.6vw,28px); text-align:left; }
+.cs{ background:#fff; border-radius:18px; box-shadow:0 0 0 1px var(--line); padding:clamp(20px,1.8vw,30px); display:flex; flex-direction:column; }
+.cs-k{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+.cs-w{ margin-top:8px; font-size:clamp(17px,1.25vw,21px); font-weight:500; letter-spacing:-.01em; color:var(--ink); }
+.cs-r{ margin-top:18px; padding-top:14px; border-top:1px solid var(--line); }
+.cs-r small{ display:block; font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); }
+.cs-r p{ margin:8px 0 0; font-size:clamp(15px,1.1vw,18px); line-height:1.45; color:var(--ink-2); }
+@media(max-width:900px){
+  .tg{ width:100%; font-size:13px; }
+  .tg-head, .tg-row{ grid-template-columns:96px 1fr; }
+  .tg-weeks b{ font-size:10px; letter-spacing:.04em; }
+  .tg-bar{ padding:0 8px; } .tg-bar span{ display:none; }
+  .tg-pin{ padding:4px 6px; } .tg-pin span{ display:none; }
+  .tg-l{ padding-right:8px; line-height:1.2; }
+  .cs3{ grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
@@ -567,12 +603,14 @@
   <div class="eyebrow rise">How we start</div>
   <h2 class="rise d1">First month <em>free.</em></h2>
   <div class="sub rise d1">20–30 people<span>·</span>one team you choose<span>·</span>results from week one</div>
-  <ol class="m3-steps rise d2">
-    <li><small>Week 1</small><b>Install</b><span>The recorder goes on. Nothing changes in your systems.</span></li>
-    <li><small>Week 1</small><b>Onboard the team</b><span>A short session for the team and their managers.</span></li>
-    <li><small>Weeks 2–4</small><b>Weekly checkpoints</b><span>Reports and the plan update every week. We go through them with managers.</span></li>
-    <li><small>End of month</small><b>Joint debrief</b><span>What we found and what to automate first.</span></li>
-  </ol>
+  <div class="tg rise d2" role="img" aria-label="One-month timeline: onboarding in week one, recording all month, reports from week two, manager checkpoints weekly, joint debrief at the end of the month">
+    <div class="tg-head"><span></span><div class="tg-weeks"><b>Week 1</b><b>Week 2</b><b>Week 3</b><b>Week 4</b></div></div>
+    <div class="tg-row"><span class="tg-l">Onboarding</span><div class="tg-t"><i class="tg-bar tg-on" style="left:0%;width:25%"><span>Install · team session</span></i></div></div>
+    <div class="tg-row"><span class="tg-l">Recording</span><div class="tg-t"><i class="tg-bar tg-rec" style="left:0%;width:100%"><span>Runs in the background, all month</span></i></div></div>
+    <div class="tg-row"><span class="tg-l">Reports and plan</span><div class="tg-t"><i class="tg-bar tg-out" style="left:25%;width:75%"><span>Live after week 1 · updated every week</span></i></div></div>
+    <div class="tg-row"><span class="tg-l">Manager checkpoints</span><div class="tg-t"><i class="tg-pin" style="left:25%"><span>Wk 1</span></i><i class="tg-pin" style="left:50%"><span>Wk 2</span></i><i class="tg-pin" style="left:75%"><span>Wk 3</span></i></div></div>
+    <div class="tg-row"><span class="tg-l">Joint debrief</span><div class="tg-t"><i class="tg-bar tg-end" style="left:81%;width:19%"><span>End of month</span></i></div></div>
+  </div>
   <div class="m30-who rise d3"><span><b>Your</b> process lead</span><span><b>Silow</b> a named manager, every week</span><span><b>Symfa</b> builds the automations</span></div>
 </section>
 <section class="dark s-layers s-iso">
@@ -1043,12 +1081,12 @@
   </ol>
 </section>
 <section class="s-goals">
-  <div class="eyebrow rise">What success looks like</div>
-  <h2 class="rise d1">Three things <em>you asked for.</em></h2>
+  <div class="eyebrow rise">At the end of the month</div>
+  <h2 class="rise d1">What the data <em>should answer.</em></h2>
   <div class="g3 rise d2">
-    <div><div class="n">01</div><div class="t">Process documentation without consultants.</div><div class="b">Written from every recorded run, not from one person watched for a day.</div><div class="k">Process page · export</div></div>
-    <div><div class="n">02</div><div class="t">A plan of action, not a report.</div><div class="b">The step to automate, why, and a brief your developers can build an agent from.</div><div class="k">Plan · the one step · blueprint</div></div>
-    <div><div class="n">03</div><div class="t">Visibility into how people work.</div><div class="b">Each team and each person: hours, volume, rate, and what to change.</div><div class="k">Team · people</div></div>
+    <div><div class="n">01</div><div class="t">How does the process really run?</div><div class="b">Documented from every recorded run, by everyone who does it. Nobody shadows anyone.</div></div>
+    <div><div class="n">02</div><div class="t">What do we build first?</div><div class="b">The step to automate, why, and a brief a developer can build the agent from.</div></div>
+    <div><div class="n">03</div><div class="t">How do teams and people work?</div><div class="b">Hours, volume and pace for each team and each person, and what to change.</div></div>
   </div>
 </section>
 <section class="s-depth s-prod">
@@ -1058,40 +1096,50 @@
   <div class="appframe"><iframe title="Silow · home" data-src="app3/index.html?embed=1#home" data-focus="Start here"></iframe></div>
 </section>
 <section class="s-depth s-prod">
-  <div class="eyebrow">02 <b>·</b> Plan of action</div>
+  <div class="eyebrow">02 <b>·</b> What to build first</div>
   <h2>Processes &amp; automation: a plan, ranked.</h2>
   <p class="line">Every suggestion with hours back, effort and payback, <b>linked to the step it comes from.</b></p>
   <div class="appframe"><iframe title="Silow · automation plan" data-src="app3/index.html?embed=1#plan"></iframe></div>
 </section>
 <section class="s-depth s-prod">
-  <div class="eyebrow">01 <b>·</b> Documentation</div>
+  <div class="eyebrow">01 <b>·</b> How the process runs</div>
   <h2>One process, documented from the work itself.</h2>
   <p class="line">From 652 recorded runs by six people. <b>Create a guide or export to Word, PDF, Visio or BPMN.</b></p>
   <div class="appframe"><iframe title="Silow · process documentation" data-src="app3/index.html?embed=1#case/n1" data-focus="written instructions"></iframe></div>
 </section>
 <section class="s-depth s-prod">
-  <div class="eyebrow">02 <b>·</b> Plan of action</div>
+  <div class="eyebrow">02 <b>·</b> What to build first</div>
   <h2>The one step to change, and why.</h2>
   <p class="line">Step 8, re-keying loss details: <b>18% of the time, typed field by field.</b> What to do with it comes with the numbers.</p>
   <div class="appframe"><iframe title="Silow · the one step" data-src="app3/index.html?embed=1#case/n1/end"></iframe></div>
 </section>
 <section class="s-depth s-prod">
-  <div class="eyebrow">02 <b>·</b> Plan of action</div>
+  <div class="eyebrow">02 <b>·</b> What to build first</div>
   <h2>A brief your developers can build the agent from.</h2>
   <p class="line">Trigger, inputs, systems, where a person checks, outputs. <b>Copy it or print it for IT and Symfa.</b></p>
   <div class="appframe"><iframe title="Silow · automation blueprint" data-src="app3/index.html?embed=1#case/n1/brief"></iframe></div>
 </section>
 <section class="s-depth s-prod">
-  <div class="eyebrow">03 <b>·</b> People and teams</div>
+  <div class="eyebrow">03 <b>·</b> How teams and people work</div>
   <h2>Team report: what to change in this team.</h2>
   <p class="line">Claims intake: <b>the automations that touch this team, sorted by hours back.</b></p>
   <div class="appframe"><iframe title="Silow · team recommendations" data-src="app3/index.html?embed=1#team/intake" data-focus="Automations"></iframe></div>
 </section>
 <section class="s-depth s-prod">
-  <div class="eyebrow">03 <b>·</b> People and teams</div>
+  <div class="eyebrow">03 <b>·</b> How teams and people work</div>
   <h2>Every person, side by side.</h2>
   <p class="line">Hours, items done and items per hour for all 30 people. <b>Open anyone for their own report and recommendations.</b></p>
   <div class="appframe"><iframe title="Silow · personal reports" data-src="app3/index.html?embed=1#people"></iframe></div>
+</section>
+<section class="s-cases">
+  <div class="eyebrow rise">Where it is used <b>·</b> client examples, anonymized</div>
+  <h2 class="rise d1">What the recordings showed, <em>and what came of it.</em></h2>
+  <div class="cs3 rise d2"><div class="cs"><div class="cs-k">Law firm · UAE</div><div class="cs-w">Two lawyers, one week recorded</div><div class="cs-r"><small>What the data showed</small><p>Documents took only 20–30% of the lawyers’ time. The bottleneck was client communication and invoicing.</p></div><div class="cs-r"><small>What came of it</small><p>We built a client-onboarding agent: it requests documents by email or WhatsApp, checks the pack and drafts the invoice. A lawyer approves.</p></div></div><div class="cs"><div class="cs-k">Licensing company</div><div class="cs-w">About 20 people, 9 recorded for 5 weeks</div><div class="cs-r"><small>What the data showed</small><p>Work waited 6.4× longer once it passed to another person. One regulator PDF was re-attached by hand five times across two messengers.</p></div><div class="cs-r"><small>What came of it</small><p>An agent set for each of three teams, built on their observed procedures, plus a connector from the data to their AI assistant.</p></div></div><div class="cs"><div class="cs-k">Accounting firm</div><div class="cs-w">Client onboarding, run end to end</div><div class="cs-r"><small>What the data showed</small><p>Three client documents triggered 19 questions and 14 document requests, with the same person asked for twice.</p></div><div class="cs-r"><small>What came of it</small><p>One shared knowledge base and a team agent across mail, meetings and notes. It writes the weekly summary and the daily task brief.</p></div></div></div>
+</section>
+<section class="s-cases">
+  <div class="eyebrow rise">Where it is used <b>·</b> client examples, anonymized</div>
+  <h2 class="rise d1">Same recorder, <em>different questions.</em></h2>
+  <div class="cs3 rise d2"><div class="cs"><div class="cs-k">Accounting services</div><div class="cs-w">18 people, one month recorded</div><div class="cs-r"><small>What the data showed</small><p>The task queue was one of the largest time sinks: 16% of time in payroll, 27% in renewals. Part of it lived in spreadsheets, so work was done twice.</p></div><div class="cs-r"><small>What came of it</small><p>The client named queue assembly as the fix. Next: the first functions handed to agents.</p></div></div><div class="cs"><div class="cs-k">Healthcare back office · US</div><div class="cs-w">On their servers, their models</div><div class="cs-r"><small>What the data showed</small><p>The procedure of each role, recorded as it is really done.</p></div><div class="cs-r"><small>What came of it</small><p>Day-by-day onboarding guides for new hires, written from the recordings. Their own team builds the automations.</p></div></div><div class="cs"><div class="cs-k">Delivery and mobility</div><div class="cs-w">Operations team, 8 people</div><div class="cs-r"><small>What the data showed</small><p>An AI assistant was available to everyone, yet it took about 0% of recorded work time. The work ran through chat and browser tabs.</p></div><div class="cs-r"><small>What came of it</small><p>Six team playbooks and per-person suggestions, routed through the assistant they already had.</p></div></div></div>
 </section>
 <section class="s-close">
   <h2 class="rise">Pick a team.<br><em>Start the free month.</em></h2>
